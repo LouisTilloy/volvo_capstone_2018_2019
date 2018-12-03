@@ -2,6 +2,7 @@
 Retrain the YOLO model for your own dataset.
 """
 
+import argparse
 import numpy as np
 import keras.backend as K
 from keras.layers import Input, Lambda
@@ -14,6 +15,15 @@ from yolo3.utils import get_random_data
 
 
 def _main():
+
+    # argparse
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--toy', action="store_true",
+                        help='train on 1 epoch on each step.')
+    args = parser.parse_args()
+    toy_mult = 50 if args.toy else 1
+
+    # main
     annotation_path = 'train_lisa.txt'
     log_dir = 'logs/000/'
     classes_path = 'model_data/lisa_classes.txt'
@@ -60,7 +70,7 @@ def _main():
                 steps_per_epoch=max(1, num_train//batch_size),
                 validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
                 validation_steps=max(1, num_val//batch_size),
-                epochs=50,
+                epochs=50/toy_mult,
                 initial_epoch=0,
                 callbacks=[logging, checkpoint])
         model.save_weights(log_dir + 'trained_weights_stage_1.h5')
@@ -79,8 +89,8 @@ def _main():
             steps_per_epoch=max(1, num_train//batch_size),
             validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
             validation_steps=max(1, num_val//batch_size),
-            epochs=100,
-            initial_epoch=50,
+            epochs=100/toy_mult,
+            initial_epoch=50/toy_mult,
             callbacks=[logging, checkpoint, reduce_lr, early_stopping])
         model.save_weights(log_dir + 'trained_weights_final.h5')
 
