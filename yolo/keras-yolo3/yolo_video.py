@@ -13,7 +13,7 @@ def detect_img(yolo):
             continue
         else:
             r_image = yolo.detect_image(image)
-            #r_image.show()
+            r_image.show()
     yolo.close_session()
 
 FLAGS = None
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     Command line options
     '''
     parser.add_argument(
-        '--model', type=str,
+        '--model_path', type=str,
         help='path to model weight file, default ' + YOLO.get_defaults("model_path")
     )
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '--classes', type=str,
+        '--classes_path', type=str,
         help='path to class definitions, default ' + YOLO.get_defaults("classes_path")
     )
 
@@ -62,7 +62,6 @@ if __name__ == '__main__':
     )
 
     FLAGS = parser.parse_args()
-
     if FLAGS.image:
         """
         Image detection mode, disregard any remaining command line arguments
