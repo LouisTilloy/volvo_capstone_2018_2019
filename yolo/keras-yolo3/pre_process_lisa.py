@@ -1,6 +1,7 @@
-import pandas as pd
 import os
 import copy
+import numpy as np
+import pandas as pd
 
 ROOT_LISA = "LISA_TS"
 ROOT_LISA_EXTENSTION = "LISA_TS_extension"
@@ -71,14 +72,28 @@ def create_training_file(clean_df, train_file_name, extension=False):
             train_file.write("\n")
 
 
+def split_df(df, test_size=0.2):
+    """
+    Split a dataframe into a train dataframe and a test dataframe.
+    """
+    np.random.seed(10)
+    indices = np.arange(0, len(df))
+    np.random.shuffle(indices)
+
+    train_df = df.iloc[indices[int(len(indices)*test_size):]]
+    test_df = df.iloc[indices[:int(len(indices)*test_size)]]
+
+    return train_df, test_df
+
+
+
 def main():
     # Pre-process original LISA dataset
     print("Pre-processing original LISA dataset...")
     annotations = pd.read_csv(os.path.join(ROOT_LISA, "allAnnotations.csv"), delimiter=";")
 
     classes = create_classes_file(annotations)
-    df = get_clean_df(annotations, classes)
-    create_training_file(df, "train_lisa.txt")
+    df_original = get_clean_df(annotations, classes)
     print("Done.")
     print()
 
@@ -86,8 +101,17 @@ def main():
     print("Pre-processing extension LISA dataset...")
     annotations = pd.read_csv(os.path.join(ROOT_LISA_EXTENSTION, "allTrainingAnnotations.csv"), delimiter=";")
 
-    df = get_clean_df(annotations, classes, extension=True)
-    create_training_file(df, "test_lisa.txt", extension=True)
+    df_ext = get_clean_df(annotations, classes, extension=True)
+    print("Done.")
+    print()
+
+    # Creating txt files
+    print("Creating train and test txt files...")
+    df = pd.concat([df_original, df_ext])
+    train_df, test_df = split_df(df, test_size=0.2)
+
+    create_training_file(train_df, "train_lisa.txt")
+    create_training_file(test_df, "test_lisa.txt")
     print("Done.")
 
 
