@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 ROOT_LISA = "LISA_TS"
-ROOT_LISA_EXTENSTION = "LISA_TS_extension"
+ROOT_LISA_EXTENSION = "LISA_TS_extension"
 
 
 def create_classes_file(original_df):
@@ -49,6 +49,9 @@ def get_clean_df(original_df, classes, extension=False):
         columns.append("Occluded,On another road")
     df = df.drop(columns=columns)
 
+    # To keep track from where the data comes from
+    df["is_extension"] = extension
+
     return df
 
 
@@ -57,10 +60,15 @@ def create_training_file(clean_df, train_file_name, extension=False):
     From the clean dataframe, create a text file that can be used as an input
     for training yolo.
     """
-    root_folder = ROOT_LISA if not extension else ROOT_LISA_EXTENSTION
     with open(train_file_name, "w") as train_file:
         for index in range(len(clean_df)):
             example = clean_df.iloc[index]
+            # Get image folder root
+            if example["is_extension"]:
+                root_folder = ROOT_LISA_EXTENSION
+            else:
+                root_folder = ROOT_LISA
+                
             train_file.write(os.path.join(root_folder, example["Filename"]))
             train_file.write(" ")
 
@@ -99,7 +107,7 @@ def main():
 
     # Pre-process extension LISA dataset
     print("Pre-processing extension LISA dataset...")
-    annotations = pd.read_csv(os.path.join(ROOT_LISA_EXTENSTION, "allTrainingAnnotations.csv"), delimiter=";")
+    annotations = pd.read_csv(os.path.join(ROOT_LISA_EXTENSION, "allTrainingAnnotations.csv"), delimiter=";")
 
     df_ext = get_clean_df(annotations, classes, extension=True)
     print("Done.")
