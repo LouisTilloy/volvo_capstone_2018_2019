@@ -14,7 +14,7 @@ def create_classes_file(original_df):
     Also returns the list of classes in the same order as in the text file.
     """
     classes = original_df["Annotation tag"].unique()
-    with open("lisa_classes.txt", "w") as classes_file:
+    with open("model_data/lisa_classes.txt", "w") as classes_file:
         for index, class_ in enumerate(classes):
             classes_file.write(class_)
             if index < len(classes) - 1:
@@ -99,17 +99,17 @@ def main():
     # Pre-process original LISA dataset
     print("Pre-processing original LISA dataset...")
     annotations = pd.read_csv(os.path.join(ROOT_LISA, "allAnnotations.csv"), delimiter=";")
+    annotations_ext = pd.read_csv(os.path.join(ROOT_LISA_EXTENSION, "allTrainingAnnotations.csv"), delimiter=";")
 
-    classes = create_classes_file(annotations)
+    classes = create_classes_file(pd.concat([annotations, annotations_ext]))
     df_original = get_clean_df(annotations, classes)
     print("Done.")
     print()
 
     # Pre-process extension LISA dataset
     print("Pre-processing extension LISA dataset...")
-    annotations = pd.read_csv(os.path.join(ROOT_LISA_EXTENSION, "allTrainingAnnotations.csv"), delimiter=";")
 
-    df_ext = get_clean_df(annotations, classes, extension=True)
+    df_ext = get_clean_df(annotations_ext, classes, extension=True)
     print("Done.")
     print()
 
