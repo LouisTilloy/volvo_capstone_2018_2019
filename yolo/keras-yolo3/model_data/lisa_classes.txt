@@ -45,3 +45,12 @@ speedLimit40
 speedLimit55
 doNotPass
 intersection
+intersectionLaneControl
+bicyclesMayUseFullLane
+yieldToPedestrian
+noParking
+speedBumpsAhead
+noLeftAndUTurn
+noUTurn
+leftAndUTurnControl
+speedLimit60

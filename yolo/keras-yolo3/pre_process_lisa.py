@@ -2,6 +2,7 @@ import os
 import copy
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 ROOT_LISA = "LISA_TS"
 ROOT_LISA_EXTENSION = "LISA_TS_extension"
@@ -55,44 +56,59 @@ def get_clean_df(original_df, classes, extension=False):
     return df
 
 
-def create_training_file(clean_df, train_file_name, extension=False):
+def get_root(df):
     """
-    From the clean dataframe, create a text file that can be used as an input
-    for training yolo.
+    :param df: sub-dataframe associated with only 1 filename
+    :return: str: returns the root folder of the associated file.
     """
-    with open(train_file_name, "w") as train_file:
-        for index in range(len(clean_df)):
-            example = clean_df.iloc[index]
-            # Get image folder root
-            if example["is_extension"]:
-                root_folder = ROOT_LISA_EXTENSION
-            else:
-                root_folder = ROOT_LISA
-                
-            train_file.write(os.path.join(root_folder, example["Filename"]))
-            train_file.write(" ")
+    are_extensions = df["is_extension"]
+    is_extension = are_extensions.iloc[0]
+    assert((are_extensions == is_extension).all())  # making sure that the file is only in one folder
 
-            for name in ["x_min", "y_min", "x_max", "y_max"]:
-                train_file.write(str(example[name]))
-                train_file.write(",")
+    if is_extension:
+        return ROOT_LISA_EXTENSION
+    else:
+        return ROOT_LISA
 
-            train_file.write(str(example["class_id"]))
+
+def create_file(clean_df, file_name, filenames):
+    """
+    From the clean dataframe and a list of file names, create a text file
+    that can be used as an input for training yolo.
+    (1-sign-labeled issue fixed!)
+    """
+    with open(file_name, "w") as train_file:
+        # for each unique filename, get all the rows with this filename
+        for filename in tqdm(filenames):
+            examples = clean_df[clean_df["Filename"] == filename]
+            root_folder = get_root(examples)
+
+            # right all the information of these rows into the same line
+            train_file.write(os.path.join(root_folder, filename))
+            for index in range(len(examples)):
+                example = examples.iloc[index]
+                train_file.write(" ")
+                for name in ["x_min", "y_min", "x_max", "y_max"]:
+                    train_file.write(str(example[name]))
+                    train_file.write(",")
+                train_file.write(str(example["class_id"]))
+
             train_file.write("\n")
 
 
-def split_df(df, test_size=0.2):
+def create_train_test_file(clean_df, train_file_name, test_file_name, test_size=0.2):
     """
-    Split a dataframe into a train dataframe and a test dataframe.
+    From the clean dataframe, create 2 text files that can be used as an input
+    for training & testing yolo. (1-sign-labeled issue fixed!)
     """
-    np.random.seed(10)
-    indices = np.arange(0, len(df))
+    filenames = clean_df["Filename"].unique()
+    indices = np.arange(0, len(filenames))
     np.random.shuffle(indices)
+    train_filenames = filenames[indices[int(len(indices) * test_size):]]
+    test_filenames = filenames[indices[:int(len(indices) * test_size)]]
 
-    train_df = df.iloc[indices[int(len(indices)*test_size):]]
-    test_df = df.iloc[indices[:int(len(indices)*test_size)]]
-
-    return train_df, test_df
-
+    create_file(clean_df, train_file_name, train_filenames)
+    create_file(clean_df, test_file_name, test_filenames)
 
 
 def main():
@@ -101,7 +117,7 @@ def main():
     annotations = pd.read_csv(os.path.join(ROOT_LISA, "allAnnotations.csv"), delimiter=";")
     annotations_ext = pd.read_csv(os.path.join(ROOT_LISA_EXTENSION, "allTrainingAnnotations.csv"), delimiter=";")
 
-    classes = create_classes_file(pd.concat([annotations, annotations_ext]))
+    classes = create_classes_file(pd.concat([annotations, annotations_ext], sort=False))
     df_original = get_clean_df(annotations, classes)
     print("Done.")
     print()
@@ -116,10 +132,8 @@ def main():
     # Creating txt files
     print("Creating train and test txt files...")
     df = pd.concat([df_original, df_ext])
-    train_df, test_df = split_df(df, test_size=0.2)
+    create_train_test_file(df, "train_lisa.txt", "test_lisa.txt", test_size=0.2)
 
-    create_training_file(train_df, "train_lisa.txt")
-    create_training_file(test_df, "test_lisa.txt")
     print("Done.")
 
 
