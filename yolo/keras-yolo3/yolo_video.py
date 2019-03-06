@@ -30,7 +30,7 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '--anchors', type=str,
+        '--anchors_path', type=str,
         help='path to anchor definitions, default ' + YOLO.get_defaults("anchors_path")
     )
 

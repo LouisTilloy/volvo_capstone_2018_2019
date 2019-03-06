@@ -103,7 +103,9 @@ def create_train_test_file(clean_df, train_file_name, test_file_name, test_size=
     """
     filenames = clean_df["Filename"].unique()
     indices = np.arange(0, len(filenames))
+    np.random.seed(0)
     np.random.shuffle(indices)
+
     train_filenames = filenames[indices[int(len(indices) * test_size):]]
     test_filenames = filenames[indices[:int(len(indices) * test_size)]]
 
