@@ -84,7 +84,7 @@ def create_file(clean_df, file_name, filenames):
             root_folder = get_root(examples)
 
             # right all the information of these rows into the same line
-            train_file.write(os.path.join(root_folder, filename))
+            train_file.write(root_folder + '/' + filename)
             for index in range(len(examples)):
                 example = examples.iloc[index]
                 train_file.write(" ")
@@ -96,10 +96,12 @@ def create_file(clean_df, file_name, filenames):
             train_file.write("\n")
 
 
-def create_train_test_file(clean_df, train_file_name, test_file_name, test_size=0.2):
+def create_train_test_file_random(clean_df, train_file_name, test_file_name, test_size=0.2):
     """
     From the clean dataframe, create 2 text files that can be used as an input
     for training & testing yolo. (1-sign-labeled issue fixed!)
+    The files are split randomly between train and test.
+    /!\ OBSOLETE /!\
     """
     filenames = clean_df["Filename"].unique()
     indices = np.arange(0, len(filenames))
@@ -111,6 +113,69 @@ def create_train_test_file(clean_df, train_file_name, test_file_name, test_size=
 
     create_file(clean_df, train_file_name, train_filenames)
     create_file(clean_df, test_file_name, test_filenames)
+
+
+def _get_scene_name(filepath):
+    """
+    Given a filename or a filepath formated as in the LISA dataset,
+    returns the name of the scene.
+    """
+    name = filepath.split("/")[-1].split(".")[0]
+    return name
+
+
+def get_unique_scenes(filepaths):
+    """
+    From a list of filenames, get the list of unique scenes.
+    """
+    unique_scenes = []
+    for filepath in filepaths:
+        scene_name = _get_scene_name(filepath)
+        if scene_name not in unique_scenes:
+            unique_scenes.append(scene_name)
+    return unique_scenes
+
+
+def create_train_test_file_scenes(clean_df, train_file_name, test_file_name, test_size=0.2):
+    """
+    From the clean dataframe, create 2 text files that can be used as an input
+    for training & testing yolo. (1-sign-labeled issue fixed!)
+    The files are split between train and test while taking into account scenes
+    (two images from the same scene will be in the same folder)
+    """
+    # step 1: get unique scenes
+    filenames = clean_df["Filename"].unique()
+    scenes = np.array(get_unique_scenes(filenames))
+
+    # step 2: split scenes in train/test
+    indices = np.arange(0, len(scenes), 1)
+    np.random.seed(10)  # important line
+    np.random.shuffle(indices)
+    # The test size will not be exactly test_size, but on average it will be close
+    # /!\ all classes are not guaranteed to be in the training set
+    scenes_train = scenes[indices[int(0.2 * len(scenes)):]]
+    scenes_test = scenes[indices[:int(0.2 * len(scenes))]]
+
+    # step 3: get associated filepaths
+    train_filenames = get_filepaths(scenes_train, filenames)
+    test_filenames = get_filepaths(scenes_test, filenames)
+
+    # step 3: create txt files
+    create_file(clean_df, train_file_name, train_filenames)
+    create_file(clean_df, test_file_name, test_filenames)
+
+
+def get_filepaths(scene_names, filepaths):
+    """
+    Given a list of scenes, returns a list of all the file_paths
+    associated with the given scenes.
+    """
+    scenes_filepaths = []
+    for scene_name in scene_names:
+        for filepath in filepaths:
+            if _get_scene_name(filepath) == scene_name:
+                scenes_filepaths.append(filepath)
+    return scenes_filepaths
 
 
 def main():
@@ -134,7 +199,7 @@ def main():
     # Creating txt files
     print("Creating train and test txt files...")
     df = pd.concat([df_original, df_ext])
-    create_train_test_file(df, "train_lisa.txt", "test_lisa.txt", test_size=0.2)
+    create_train_test_file_scenes(df, "train_lisa.txt", "test_lisa.txt", test_size=0.2)
 
     print("Done.")
 
