@@ -3,6 +3,7 @@
 from functools import reduce
 
 from PIL import Image
+from skimage import color
 import numpy as np
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 
@@ -29,6 +30,11 @@ def letterbox_image(image, size):
     new_image = Image.new('RGB', size, (128,128,128))
     new_image.paste(image, ((w-nw)//2, (h-nh)//2))
     return new_image
+
+def rgb_2_gray(np_image):
+    gray_img = color.rgb2gray(np_image)
+    gray_img_3c = np.transpose([gray_img] * 3, axes=[1, 2, 0])
+    return gray_img_3c
 
 def rand(a=0, b=1):
     return np.random.rand()*(b-a) + a

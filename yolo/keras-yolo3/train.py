@@ -11,7 +11,7 @@ from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
-from yolo3.utils import get_random_data
+from yolo3.utils import get_random_data, rgb_2_gray
 
 
 def _main():
@@ -20,8 +20,11 @@ def _main():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--toy', action="store_true",
                         help='train on 1 epoch on each step.')
+    parser.add_argument('--gray_scale', action="store_true",
+                        help='pre-process the input images to put them in black and white')
     args = parser.parse_args()
     toy_mult = 50 if args.toy else 1
+    is_gray = args.gray_scale
 
     # main
     annotation_path = 'train_lisa.txt'
@@ -66,9 +69,11 @@ def _main():
 
         batch_size = 32
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes,
+                                                   is_gray=is_gray),
                 steps_per_epoch=max(1, num_train//batch_size),
-                validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
+                validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes,
+                                                       is_gray=is_gray),
                 validation_steps=max(1, num_val//batch_size),
                 epochs=50//toy_mult,
                 initial_epoch=0,
@@ -85,9 +90,11 @@ def _main():
 
         batch_size = 16 # note that more GPU memory is required after unfreezing the body
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes,
+                                                   is_gray=is_gray),
             steps_per_epoch=max(1, num_train//batch_size),
-            validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
+            validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes,
+                                                   is_gray=is_gray),
             validation_steps=max(1, num_val//batch_size),
             epochs=150//toy_mult,
             initial_epoch=50//toy_mult,
@@ -172,7 +179,7 @@ def create_tiny_model(input_shape, anchors, num_classes, load_pretrained=True, f
 
     return model
 
-def data_generator(annotation_lines, batch_size, input_shape, anchors, num_classes):
+def data_generator(annotation_lines, batch_size, input_shape, anchors, num_classes, is_gray):
     '''data generator for fit_generator'''
     n = len(annotation_lines)
     i = 0
@@ -183,6 +190,8 @@ def data_generator(annotation_lines, batch_size, input_shape, anchors, num_class
             if i==0:
                 np.random.shuffle(annotation_lines)
             image, box = get_random_data(annotation_lines[i], input_shape, random=True)
+            if is_gray:
+                image = rgb_2_gray(image)
             image_data.append(image)
             box_data.append(box)
             i = (i+1) % n
@@ -191,10 +200,10 @@ def data_generator(annotation_lines, batch_size, input_shape, anchors, num_class
         y_true = preprocess_true_boxes(box_data, input_shape, anchors, num_classes)
         yield [image_data, *y_true], np.zeros(batch_size)
 
-def data_generator_wrapper(annotation_lines, batch_size, input_shape, anchors, num_classes):
+def data_generator_wrapper(annotation_lines, batch_size, input_shape, anchors, num_classes, is_gray=False):
     n = len(annotation_lines)
     if n==0 or batch_size<=0: return None
-    return data_generator(annotation_lines, batch_size, input_shape, anchors, num_classes)
+    return data_generator(annotation_lines, batch_size, input_shape, anchors, num_classes, is_gray)
 
 if __name__ == '__main__':
     _main()
