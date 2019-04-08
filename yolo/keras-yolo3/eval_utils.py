@@ -3,16 +3,18 @@ Utils for the yolo_evaluaation notebook
 """
 import numpy as np
 import re
+import seaborn as sns
 from keras import backend as K
 from PIL import Image, ImageFont, ImageDraw
 from timeit import default_timer as timer
 
 from yolo import YOLO
-from yolo3.utils import letterbox_image
+from yolo3.utils import letterbox_image, rgb_2_gray
 
 
 class YOLOPlus(YOLO):
-    def __init__(self, **kwargs):
+    def __init__(self, gray_scale=False, **kwargs):
+        self.gray_scale = gray_scale
         super(YOLOPlus, self).__init__(**kwargs)
 
     def detect_all_signs(self, image, score_threshold):
@@ -31,6 +33,8 @@ class YOLOPlus(YOLO):
                               image.height - (image.height % 32))
             boxed_image = letterbox_image(image, new_image_size)
         image_data = np.array(boxed_image, dtype='float32')
+        if self.gray_scale:
+            image_data = rgb_2_gray(image_data)
 
         # print(image_data.shape)
         image_data /= 255.
@@ -199,3 +203,14 @@ def load_classes(class_file):
         for line in file:
             classes.append(line[:-1])
     return classes
+
+
+def plot_bootstrap_curve(accuracy, n_data, boot_size=100000):
+    n_good = int(n_data * accuracy)
+    data = np.array([1] * n_good + (n_data - n_good) * [0])
+
+    boot_samples = np.random.choice(data, (boot_size, n_data), replace=True)
+    accs = np.mean(boot_samples, axis=1)
+
+    sns.distplot(accs, hist=False)
+
