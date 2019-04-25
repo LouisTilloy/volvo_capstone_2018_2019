@@ -205,12 +205,12 @@ def load_classes(class_file):
     return classes
 
 
-def plot_bootstrap_curve(accuracy, n_data, boot_size=100000):
+def plot_bootstrap_curve(accuracy, n_data, label=None, boot_size=100000):
     n_good = int(n_data * accuracy)
     data = np.array([1] * n_good + (n_data - n_good) * [0])
 
     boot_samples = np.random.choice(data, (boot_size, n_data), replace=True)
     accs = np.mean(boot_samples, axis=1)
 
-    sns.distplot(accs, hist=False)
+    sns.distplot(accs, hist=False, label=label)
 

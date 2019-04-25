@@ -21,21 +21,25 @@ def _main():
     parser.add_argument('--toy', action="store_true",
                         help='train on 1 epoch on each step.')
     parser.add_argument('--gray_scale', action="store_true",
-                        help='pre-process the input images to put them in black and white')
+                        help='pre-process the input images to put them in black and white.')
+    parser.add_argument('--logdir', type=str, default="logs/000/",
+                        help='directory in which the logs are stored.')
+    parser.add_argument('--annotation_path', type=str, default='train_lisa.txt',
+                        help='Training annotation file path.')
     args = parser.parse_args()
     toy_mult = 50 if args.toy else 1
     is_gray = args.gray_scale
 
     # main
-    annotation_path = 'train_lisa.txt'
-    log_dir = 'logs/000/'
+    annotation_path = args.annotation_path
+    log_dir = args.logdir
     classes_path = 'model_data/lisa_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
     class_names = get_classes(classes_path)
     num_classes = len(class_names)
     anchors = get_anchors(anchors_path)
 
-    input_shape = (416, 416) # multiple of 32, hw
+    input_shape = (256, 256) # multiple of 32, hw
 
     is_tiny_version = len(anchors)==6 # default setting
     if is_tiny_version:

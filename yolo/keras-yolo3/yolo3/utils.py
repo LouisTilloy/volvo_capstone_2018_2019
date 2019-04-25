@@ -6,6 +6,7 @@ from PIL import Image
 from skimage import color
 import numpy as np
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
+from yolo3.auto_augment_policies import get_aa_policies
 
 def compose(*funcs):
     """Compose arbitrarily many functions, evaluated left to right.
@@ -91,22 +92,8 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
     image = new_image
 
     # flip image or not
-    flip = rand()<.5
+    flip = False  # rand()<.5
     if flip: image = image.transpose(Image.FLIP_LEFT_RIGHT)
-
-    # distort image
-    hue = rand(-hue, hue)
-    sat = rand(1, sat) if rand()<.5 else 1/rand(1, sat)
-    val = rand(1, val) if rand()<.5 else 1/rand(1, val)
-    x = rgb_to_hsv(np.array(image)/255.)
-    x[..., 0] += hue
-    x[..., 0][x[..., 0]>1] -= 1
-    x[..., 0][x[..., 0]<0] += 1
-    x[..., 1] *= sat
-    x[..., 2] *= val
-    x[x>1] = 1
-    x[x<0] = 0
-    image_data = hsv_to_rgb(x) # numpy array, 0 to 1
 
     # correct boxes
     box_data = np.zeros((max_boxes,5))
@@ -124,4 +111,43 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
         if len(box)>max_boxes: box = box[:max_boxes]
         box_data[:len(box)] = box
 
+    # auto-augment
+    image = auto_augment(image, box_data)
+
+    # distort image
+    # FixMe: Remove all this process? (it's on the whole image so maybe no)
+    hue = rand(-hue, hue)
+    sat = rand(1, sat) if rand()<.5 else 1/rand(1, sat)
+    val = rand(1, val) if rand()<.5 else 1/rand(1, val)
+    x = rgb_to_hsv(np.array(image)/255.)
+    x[..., 0] += hue
+    x[..., 0][x[..., 0]>1] -= 1
+    x[..., 0][x[..., 0]<0] += 1
+    x[..., 1] *= sat
+    x[..., 2] *= val
+    x[x>1] = 1
+    x[x<0] = 0
+    image_data = hsv_to_rgb(x) # numpy array, 0 to 1
+
     return image_data, box_data
+
+
+def crop_apply(image, label_box, policy):
+    """
+    :param image: PIL image
+    """
+    int_box = tuple([int(value) for value in label_box[0:4]])
+    region = image.crop(int_box)
+    region = policy(region)
+    image.paste(region, int_box)
+    return image
+
+
+def auto_augment(image, box_data):
+    policies = get_aa_policies()
+    for box in box_data:
+        if (box == (0.0, 0.0, 0.0, 0.0, 0.0)).all():
+            break;
+        policy = np.random.choice(policies)
+        image = crop_apply(image, box, policy)
+    return image
