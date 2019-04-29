@@ -5,6 +5,15 @@ BASE_POLICIES = [t[0] for t in get_transformations()]
 
 
 def get_aa_policy(i1, p1, m1, i2, p2, m2):
+    """
+    :param i1: index of the first transformation
+    :param p1: probability to apply the first transformation
+    :param m1: parameter of the first transformation
+    :param i2: index of the second transformation
+    :param p2: probability to apply the second transformation
+    :param m2: parameter of the second transformation
+    :return: policy made from the 2 transformations.
+    """
     def policy(img):
         if np.random.rand() < p1:
             img = BASE_POLICIES[i1](img, m1)
