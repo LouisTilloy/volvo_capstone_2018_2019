@@ -6,7 +6,7 @@ from PIL import Image
 from skimage import color
 import numpy as np
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
-from yolo3.auto_augment_policies import get_aa_policies
+from yolo3.auto_augment_policies import get_aa_policies_new
 
 def compose(*funcs):
     """Compose arbitrarily many functions, evaluated left to right.
@@ -144,7 +144,7 @@ def crop_apply(image, label_box, policy):
 
 
 def auto_augment(image, box_data):
-    policies = get_aa_policies()
+    policies = get_aa_policies_new()
     for box in box_data:
         if (box == (0.0, 0.0, 0.0, 0.0, 0.0)).all():
             break;

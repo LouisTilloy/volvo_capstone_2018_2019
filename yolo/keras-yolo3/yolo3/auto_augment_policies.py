@@ -47,3 +47,32 @@ def get_aa_policies():
         get_aa_policy(0, 0.5, -0.3, 10, 0.9, 1.3),
     ]
     return list_policies
+
+
+def get_aa_policies_new():
+    list_policies= [
+        get_aa_policy(4, 0.4, 10.0, 14, 0.1, 0.067),
+        get_aa_policy(7, 0.8, 0.222, 7, 0.8, 1.0),
+        get_aa_policy(12, 1.0, 0.3, 10, 0.7, 1.9),
+        get_aa_policy(8, 0.6, 227.556, 11, 0.6, 1.3),
+        get_aa_policy(3, 0.1, 0.250, 1, 0.7, -0.100),
+
+        get_aa_policy(11, 0.5, 1.1, 10, 0.7, 0.100),
+        get_aa_policy(12, 0.6, 0.5, 10, 1.0, 1.7),
+        get_aa_policy(9, 0.4, 4.889, 4, 0.7, 2.333),
+        get_aa_policy(7, 0.2, 1.0, 10, 0.7, 1.1),
+        get_aa_policy(12, 0.5, 1.3, 12, 0.9, 1.7),
+
+        get_aa_policy(12, 0.4, 0.1, 12, 0.6, 1.7),
+        get_aa_policy(12, 0.2, 1.5, 1, 0.5, -0.1),
+        get_aa_policy(1, 0.6, 0.033, 1, 0.9, 0.033),
+        get_aa_policy(5, 0.3, 0.667, 12, 0.2, 0.7),
+        get_aa_policy(6, 0.4, 0.111, 1, 0.1, 0.233),
+
+        get_aa_policy(5, 0.9, 0.222, 8, 0.0, 142.222),
+        get_aa_policy(5, 0.8, 0.778, 6, 0.9, 0.444),
+        get_aa_policy(12, 0.5, 0.1, 10, 1.0, 0.5),
+        get_aa_policy(5, 0.9, 0.444, 4, 0.4, 10.0),
+        get_aa_policy(8, 0.8, 113.778, 5, 0.7, 0.556)
+    ]
+    return list_policies
