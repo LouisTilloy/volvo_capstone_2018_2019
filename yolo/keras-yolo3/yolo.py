@@ -8,6 +8,7 @@ import os
 from timeit import default_timer as timer
 
 import numpy as np
+import tensorflow as tf
 from keras import backend as K
 from keras.models import load_model
 from keras.layers import Input
@@ -41,7 +42,14 @@ class YOLO(object):
         self.__dict__.update(kwargs) # and update with user overrides
         self.class_names = self._get_class()
         self.anchors = self._get_anchors()
-        self.sess = K.get_session()
+        
+        #self.sess = K.get_session()
+        config = tf.ConfigProto()
+        config.gpu_options.per_process_gpu_memory_fraction = 1.0
+        config.gpu_options.allow_growth = True 
+        config.intra_op_parallelism_threads = 8
+
+        self.sess = tf.Session(config=config)
         self.boxes, self.scores, self.classes = self.generate()
 
     def _get_class(self):

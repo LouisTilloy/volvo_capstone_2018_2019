@@ -6,3 +6,11 @@ Zhanying Hu,
 Meng Pan, 
 Haoyuan Tan, 
 Louis Tilloy
+
+## Chalmers Team
+Robin Halfvordsson,
+Jonatan Nordh,
+Adam Suhren Gustafsson,
+Joel Wall,
+Mattias Westerberg,
+Adam Wirehed
