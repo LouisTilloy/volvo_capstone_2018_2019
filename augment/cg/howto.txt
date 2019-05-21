@@ -1,0 +1,9 @@
+New training:
+python train.py --dataroot ./datasets/DATASET_FOLDER --name day2night --model cycle_gan --display_id -1 --load_size 256
+
+Continue training:
+python train.py --dataroot ./datasets/DATASET_FOLDER --name day2night --model cycle_gan --display_id -1 --load_size 256 --continue_train --epoch_count SENASTE_EPOKEN
+
+Generate data:
+python test.py --dataroot datasets/day2night/testA --name day2night --model test --no_dropout --num_test ANTAL_BILDER
+mappen under datasets ska vara uppdelad i tre mappar: trainA, trainB och testA
