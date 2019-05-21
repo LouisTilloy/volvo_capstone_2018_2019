@@ -1,5 +1,6 @@
 import math
 import random
+import mathutils
 from mathutils import Vector
 
 import bpy
@@ -59,3 +60,47 @@ def obj_bounding_rect(scene, cam, obj):
         if (y > y1): y1 = y
 
     return x0, y0, x1, y1
+
+def cam_look_away(cam, obj, scene, x_factor, y_factor):
+    cam_data = bpy.data.cameras['RenderCameraData']
+    
+    fov_x = 0.0
+    fov_y = 0.0
+    ratio = scene.render.resolution_x * 1.0 / scene.render.resolution_y
+    
+    if ratio > 1.0:
+        fov_x = cam_data.angle
+        fov_y = 2.0 * math.atan(1.0 / ratio * math.tan(fov_x / 2.0))
+    else:
+        fov_y = cam_data.angle
+        fov_x = 2.0 * math.atan(ratio * math.tan(fov_y / 2.0))
+    
+    obj_loc_local = cam.matrix_world.inverted() * obj.matrix_world.to_translation()
+    verts_local = [cam.matrix_world.inverted() * obj.matrix_world * vert.co for vert in obj.data.vertices]
+    
+    # Camera is pointing in negative z-direction locally
+    angles_x = [math.atan(v.x / abs(v.z)) for v in verts_local]
+    angles_y = [math.atan(v.y / abs(v.z)) for v in verts_local]
+    
+    # Need to find max in X and Y directions respectiveley
+    
+    max_x = angles_x[0]
+    min_x = angles_x[0]
+    max_y = angles_y[0]
+    min_y = angles_y[0]
+    
+    for a in angles_x:
+        if (a > max_x): max_x = a
+        if (a < min_x): min_x = a
+        
+    for a in angles_y:
+        if (a > max_y): max_y = a
+        if (a < min_y): min_y = a
+    
+    # Yaw
+    yaw_rot = x_factor * random.uniform(-fov_x / 2.0 + max_x, fov_x / 2.0 + min_x)
+    cam.rotation_euler.rotate_axis("Y", yaw_rot)
+    
+    # Pitch
+    pitch_rot = y_factor * random.uniform(-fov_y / 2.0 + max_y, fov_y / 2.0 + min_y)
+    cam.rotation_euler.rotate_axis("X", pitch_rot)
