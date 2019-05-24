@@ -403,7 +403,7 @@ class GAN():
 
         start_time = time.time()
 
-        for i in range(n_batches + 1):
+        for i in range(n_batches):
             b_pth_out = paths_out[ia:ib]
             b_pth_in = paths_in[ia:ib]
             b_img = [util.get_image(f, self.image_size, input_transform=config.input_transform) for f in b_pth_in]

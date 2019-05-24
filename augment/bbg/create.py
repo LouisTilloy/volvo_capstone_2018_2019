@@ -1,13 +1,13 @@
 import argparse
 import tensorflow as tf
 
-from . import util
+from util import generators, discriminators
 from gan.gan import GAN
 
 
 def main():
-    g = util.generators[args.generator](args.size)
-    d = util.discriminators[args.discriminator](args.size)
+    g = generators[args.generator](args.size)
+    d = discriminators[args.discriminator](args.size)
     gan = GAN(args.name, g, d, image_size=args.size)
     
     with tf.Session() as sess:

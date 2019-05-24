@@ -1,0 +1,2 @@
+# Augmentation
+This directory contains various methods that can be used to augment datasets of images. Specifically for this project, the implemented transformations take day-time images as input and transform these to night-time. The original dataset and the tranformed dataset can then be combined to create the augmented dataset.

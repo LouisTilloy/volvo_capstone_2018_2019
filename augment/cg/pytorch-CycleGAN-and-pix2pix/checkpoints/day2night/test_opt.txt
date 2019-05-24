@@ -34,7 +34,7 @@
                 output_nc: 3                             
                     phase: test                          
                preprocess: resize_and_crop               
-              results_dir: C:\Users\Adam\git\volvo_capstone_2018_2019\data_out\lisa2012_train_c256_small_cg_ins	[default: ./results/]
+              results_dir: C:\Users\Adam\git\volvo_capstone_2018_2019\data_out\lisa2012_train_c256_small_cg	[default: ./results/]
            serial_batches: False                         
                    suffix:                               
                   verbose: False                         

@@ -81,7 +81,7 @@ def aug_saug(path, path_ann, dir_out):
     subprocess.Popen(["python", path_script, path_ann, dir_out], shell=True)
 
 def aug_cg(path, path_ann, dir_out, insert=False):
-    path_script = os.path.join(path, "augment/cg/test.py")
+    path_script = os.path.join(path, "augment/cg/pytorch-CycleGAN-and-pix2pix/test.py")
     dir_script = os.path.dirname(path_script)
     
     dir_in = os.path.dirname(path_ann)
@@ -163,7 +163,7 @@ def aug_cg(path, path_ann, dir_out, insert=False):
 
 def aug_bbg(path, path_ann, dir_out):
     path_script = os.path.join(path, "augment/bbg/infer.py")
-    subprocess.Popen(["python", path_script, "FF2", path_ann, dir_out], shell=True)
+    subprocess.Popen(["python", path_script, "FeedForwardGAN", path_ann, dir_out], shell=True)
 
 def main():
     path = os.getcwd()
