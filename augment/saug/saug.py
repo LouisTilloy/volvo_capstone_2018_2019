@@ -47,26 +47,27 @@ def augment_img(img, bboxes):
 
     return img_res
 
-def augment(path_ann, dir_out, dir_name):
+def augment(path_ann, dir_out):
+    dir_ann = os.path.dirname(path_ann)
     dct_ann = load_data(path_ann)
-    ann_file = os.path.join(dir_out, dir_name + ".txt")
+    ann_name = os.path.splitext(os.path.basename(path_ann))[0]
+    ann_file = os.path.join(dir_out, ann_name + "_saug.txt")
 
     for path, bboxes in tqdm(dct_ann.items()):
         # Read and augment source image
-        path_abs = os.path.join(os.path.dirname(path_ann), path)
+        path_abs = os.path.join(dir_ann, path)
         img_src = cv2.imread(path_abs)
         img_aug = augment_img(img_src, bboxes)
         
         # Create new path name
         path_list = os.path.normpath(path).split(os.sep)
-        path_list[0] = dir_name
+        path_list[0] += "_saug"
         new_path = os.path.join(*path_list)
         new_path_abs = os.path.join(dir_out, new_path)
         new_dir = os.path.dirname(new_path_abs)
         
         # Create new path directory
-        if not os.path.exists(new_dir):
-            os.makedirs(new_dir)
+        os.makedirs(new_dir, exist_ok=True)
         cv2.imwrite(new_path_abs, img_aug)
         
         with open(ann_file, "a") as f:
@@ -75,12 +76,7 @@ def augment(path_ann, dir_out, dir_name):
                 f.write(" %s,%s,%s,%s,%s\n" % (b[0], b[1], b[2], b[3], b[4]))
 
 def main():
-    argv = sys.argv
-    ann_path = argv[1]
-    ann_name = os.path.splitext(os.path.basename(ann_path))[0]
-    dir_out = argv[2]
-    dir_name = ann_name + "_saug"
-    augment(ann_path, dir_out, dir_name)
+    augment(sys.argv[1], sys.argv[2])
 
 if __name__ == "__main__":
     main()

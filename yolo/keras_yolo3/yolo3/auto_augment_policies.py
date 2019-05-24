@@ -1,5 +1,5 @@
 import numpy as np
-from yolo3.base_policies import get_transformations
+from .base_policies import get_transformations
 
 BASE_POLICIES = [t[0] for t in get_transformations()]
 

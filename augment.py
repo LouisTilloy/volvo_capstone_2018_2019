@@ -4,6 +4,9 @@ import cv2
 import shutil
 import argparse
 import subprocess
+from PIL import Image
+
+from yolo.keras_yolo3.yolo3.utils import auto_augment
 
 AUG_BLEND = "BLEND"
 AUG_SAUG = "SAUG"
@@ -17,14 +20,6 @@ parser = argparse.ArgumentParser(description="Augment data set.")
 parser.add_argument("method", metavar="method", type=str, help="The augmentation method.")
 parser.add_argument("path_ann", metavar="annotations.txt", type=str, help="The path to the txt-file containing the annotations relative to the data_in directory.")
 args = parser.parse_args()
-
-#if not os.path.isfile(args.path_ann):
-#    print("Error: The given annotation file %s does not exist." % (args.path_ann))
-#    exit()
-
-#if not os.path.isdir(args.dir_out):
-#    print("Error: The given directory %s does not exist." % (args.dir_out))
-#    exit()
 
 def load_data(file_name):
     dct = dict()
@@ -67,7 +62,7 @@ def augment(method, path, path_ann, dir_out):
     elif (method == AUG_BBG):
         aug_bbg(path, path_ann, dir_out)
     elif (method == AUG_AAUG):
-        pass
+        aug_aaug(path, path_ann, dir_out)
     elif (method == AUG_AAUG_BBG):
         pass
 
@@ -85,72 +80,54 @@ def aug_cg(path, path_ann, dir_out, insert=False):
     dir_script = os.path.dirname(path_script)
     
     dir_in = os.path.dirname(path_ann)
-    dir_temp = os.path.join(dir_in, "temp_cg")
-    os.makedirs(dir_temp, exist_ok=True)
+    dir_temp_old = os.path.join(dir_in, "temp_cg")
+    os.makedirs(dir_temp_old, exist_ok=True)
+    
+    suffix = "_cg_ins" if insert else "_ins"
 
-    src = load_data(path_ann)
-    for img in src.keys():
-        name  = os.path.basename(img)
-        s = os.path.join(dir_in, img)
-        t = os.path.join(dir_temp, name)
+    d_old, d_new = copy_annotations(path_ann, dir_out, suffix)
+
+    for k in d_old.keys():
+        name  = os.path.basename(k)
+        s = os.path.join(dir_in, k)
+        t = os.path.join(dir_temp_old, k)
+        os.makedirs(os.path.dirname(t), exist_ok=True)
         shutil.copy(s, t)
 
-    suffix = "_cg"
-    if insert:
-        suffix += "_ins"
-
-    paths = get_paths(dir_temp)
+    paths = get_paths(dir_temp_old)
     n = str(len(paths))
-    ann_name = os.path.splitext(os.path.basename(path_ann))[0]
-    new_name = ann_name + suffix
-    new_dir = os.path.join(dir_out, new_name)
+    dir_temp_new = os.path.join(dir_out, "temp_cg")
 
-    subprocess.call(["python", path_script, "--dataroot", dir_temp, "--name", "day2night", "--model", "test", "--no_dropout", "--num_test", n, "--results_dir", new_dir], shell=True, cwd=dir_script)
+    subprocess.call(["python", path_script, "--dataroot", dir_temp_old, "--name", "day2night", "--model", "test", "--no_dropout", "--num_test", n, "--results_dir", dir_temp_new], shell=True, cwd=dir_script)
 
-    shutil.rmtree(dir_temp)
+    shutil.rmtree(dir_temp_old)
     
-    dir_model = os.path.join(new_dir, "day2night")
+    dir_model = os.path.join(dir_temp_new, "day2night")
     img_dir = os.path.join(dir_model, "test_latest", "images")
     img_paths = get_paths(img_dir)
 
-    lookup_src = {os.path.splitext(os.path.basename(x))[0] : x for x in src.keys()}
+    lookup_new = {os.path.splitext(os.path.basename(x))[0] : x for x in d_new.keys()}
 
     for img in img_paths:
-        basename = os.path.basename(img)
-        name = os.path.splitext(basename)[0]
-        ext = os.path.splitext(basename)[1]
+        name = os.path.splitext(os.path.basename(img))[0]
         if name.endswith("_fake_B"):
             name = name[:-7]
-            dir_src = os.path.dirname(lookup_src[name])
-            path_list = os.path.normpath(dir_src).split(os.sep)
-            dir_src = os.path.join(*path_list[1:])
-            tar_dir = os.path.join(new_dir, dir_src)
-            tar_pth = os.path.join(tar_dir, name + ext)
-            os.makedirs(tar_dir, exist_ok=True)
-            if os.path.exists(tar_pth):
-                os.remove(tar_pth)
-            shutil.move(img, tar_pth)
+            path_new  = lookup_new[name]
+            path_new = os.path.join(dir_out, path_new)
+            os.makedirs(os.path.dirname(path_new), exist_ok=True)
+            if os.path.exists(path_new):
+                os.remove(path_new)
+            shutil.move(img, path_new)
     
-    shutil.rmtree(dir_model, ignore_errors=True)
-    
-    path_ann_new = os.path.join(dir_out, new_name + ".txt")
-    shutil.copy(path_ann, path_ann_new)
-
-    src_new = {}
-    for img, bbs in src.items():
-        path_list = os.path.normpath(img).split(os.sep)
-        path_list[0] = new_name
-        src_new[os.path.join(*path_list)] = bbs
-
-    save_data(path_ann_new, src_new)
+    shutil.rmtree(dir_temp_new, ignore_errors=True)
 
     if insert:
-        for path_img, bbs in src_new.items():
-            path_img_abs = os.path.join(dir_out, path_img)
+        for path_img, bbs in d_old.items():
+            path_img_abs = os.path.join(dir_in, path_img)
             name_img = os.path.splitext(os.path.basename(path_img))[0]
-            path_src = os.path.join(dir_in, lookup_src[name_img])
-            img_src = cv2.imread(path_src)
-            img = cv2.imread(path_img_abs)
+            path_new = os.path.join(dir_out, lookup_new[name_img])
+            img_src = cv2.imread(path_img_abs)
+            img = cv2.imread(path_new)
 
             for b in bbs:
                 x0 = int(b[0])
@@ -159,11 +136,39 @@ def aug_cg(path, path_ann, dir_out, insert=False):
                 y1 = int(b[3])
                 img[y0:y1,x0:x1] = img_src[y0:y1,x0:x1]
             
-            cv2.imwrite(path_img_abs, img)
+            cv2.imwrite(path_new, img)
 
 def aug_bbg(path, path_ann, dir_out):
+    copy_annotations(path_ann, dir_out, "_bbg")
     path_script = os.path.join(path, "augment/bbg/infer.py")
     subprocess.Popen(["python", path_script, "FeedForwardGAN", path_ann, dir_out], shell=True)
+
+def aug_aaug(path, path_ann, dir_out):
+    dir_in = os.path.dirname(path_ann)
+    d_old, d_new = copy_annotations(path_ann, dir_out, "_aaug")
+
+    for (p_old, bbs), p_new in zip(d_old.items(), d_new.keys()):
+        p_old_abs = os.path.join(dir_in, p_old)
+        img_old = Image.open(p_old_abs)
+        img_new = auto_augment(img_old, bbs, check=False)
+        p_new_abs = os.path.join(dir_out, p_new)
+        os.makedirs(os.path.dirname(p_new_abs), exist_ok=True)
+        img_new.save(p_new_abs, img_old.format)
+
+def copy_annotations(path_ann, dir_out, suffix):
+    d_new = {}
+    d_old = load_data(path_ann)
+
+    for k, v in d_old.items():
+        l = os.path.normpath(k).split(os.sep)
+        l[0] += suffix
+        d_new[os.path.join(*l)] = v
+    
+    parts = os.path.splitext(os.path.basename(path_ann))
+    new_path_ann = os.path.join(dir_out, parts[0] + suffix + parts[1])
+    save_data(new_path_ann, d_new)
+
+    return d_old, d_new
 
 def main():
     path = os.getcwd()
