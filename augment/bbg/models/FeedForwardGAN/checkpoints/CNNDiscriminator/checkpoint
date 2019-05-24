@@ -1,0 +1,2 @@
+model_checkpoint_path: "C:\\Users\\Adam\\git\\volvo_capstone_2018_2019\\augment\\bbg\\models\\FeedForwardGAN\\checkpoints\\CNNDiscriminator\\CNNDiscriminator-32"
+all_model_checkpoint_paths: "C:\\Users\\Adam\\git\\volvo_capstone_2018_2019\\augment\\bbg\\models\\FeedForwardGAN\\checkpoints\\CNNDiscriminator\\CNNDiscriminator-32"

@@ -15,8 +15,7 @@ AUG_AAUG_BBG = "AAUG_BBG"
 
 parser = argparse.ArgumentParser(description="Augment data set.")
 parser.add_argument("method", metavar="method", type=str, help="The augmentation method.")
-parser.add_argument("path_ann", metavar="annotations.txt", type=str, help="The path to the txt-file containing the annotations.")
-parser.add_argument("dir_out", metavar="dir_out", type=str, help="The path to the directory where the augmented data will be saved.")
+parser.add_argument("path_ann", metavar="annotations.txt", type=str, help="The path to the txt-file containing the annotations relative to the data_in directory.")
 args = parser.parse_args()
 
 #if not os.path.isfile(args.path_ann):
@@ -56,11 +55,7 @@ def get_paths(directory):
                 paths.append(os.path.join(dirpath, f))
     return paths
     
-def augment(method, path_ann, dir_out):
-    path = os.getcwd()
-    path_ann = os.path.join(os.getcwd(), path_ann)
-    dir_out = os.path.join(os.getcwd(), dir_out)
-
+def augment(method, path, path_ann, dir_out):
     if (method == AUG_BLEND):
         aug_blend(path, path_ann, dir_out)
     elif (method == AUG_SAUG):
@@ -70,7 +65,7 @@ def augment(method, path_ann, dir_out):
     elif (method == AUG_CG_INS):
         aug_cg(path, path_ann, dir_out, insert=True)
     elif (method == AUG_BBG):
-        pass
+        aug_bbg(path, path_ann, dir_out)
     elif (method == AUG_AAUG):
         pass
     elif (method == AUG_AAUG_BBG):
@@ -136,7 +131,7 @@ def aug_cg(path, path_ann, dir_out, insert=False):
                 os.remove(tar_pth)
             shutil.move(img, tar_pth)
     
-    shutil.rmtree(dir_model)
+    shutil.rmtree(dir_model, ignore_errors=True)
     
     path_ann_new = os.path.join(dir_out, new_name + ".txt")
     shutil.copy(path_ann, path_ann_new)
@@ -166,8 +161,16 @@ def aug_cg(path, path_ann, dir_out, insert=False):
             
             cv2.imwrite(path_img_abs, img)
 
+def aug_bbg(path, path_ann, dir_out):
+    path_script = os.path.join(path, "augment/bbg/infer.py")
+    subprocess.Popen(["python", path_script, "FF2", path_ann, dir_out], shell=True)
+
 def main():
-    augment(args.method, args.path_ann, args.dir_out)
+    path = os.getcwd()
+    method = args.method
+    path_ann = os.path.join(path, "data_in", args.path_ann)
+    dir_out = os.path.join(path, "data_out")
+    augment(method, path, path_ann, dir_out)
 
 if __name__ == "__main__":
     main()

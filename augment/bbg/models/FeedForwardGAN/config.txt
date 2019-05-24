@@ -1,0 +1,7 @@
+model_name,my_model
+generator,FeedForwardGenerator
+discriminator,CNNDiscriminator
+image_size,256
+c_dim,3
+bbox_weight,1.0
+image_weight,1.0
