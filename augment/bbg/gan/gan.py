@@ -422,6 +422,16 @@ class GAN():
 
         print("Inference completed in {:4.4f}".format(time.time() - start_time))
     
+    def infer_img(self, sess, img):
+        b_img = [np.array(img).astype(np.float32)]
+        
+        output, = sess.run([self.images_fake], feed_dict={
+            self.batch_size : 1,
+            self.images_input : b_img,
+            self.is_training : True})
+        
+        return util.norm2byte(output[0])
+            
     def save_config(self):
         config = {
             "model_name" : self.model_name,

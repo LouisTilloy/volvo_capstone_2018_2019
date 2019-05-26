@@ -44,13 +44,15 @@ parser.add_argument("--output-dir", type=str, dest="output_dir", default="output
 
 parser.add_argument("--input-transform", type=str, dest="input_transform", default="resize", choices=["resize","crop"], help="How to pre-process the input images")
 
-parser.add_argument("--sample-interval", type=int, dest="sample_interval", default=16, help="Number of epochs between samples")
+parser.add_argument("--sample-interval", type=int, dest="sample_interval", default=512, help="Number of images between samples")
 
 parser.add_argument("--sample-size", type=int, dest="sample_size", default=16, help="Number of samples to generate")
 
-parser.add_argument("--checkpoint-interval", type=int, dest="checkpoint_interval", default=16, help="Number of epochs between checkpoints")
+parser.add_argument("--checkpoint-interval", type=int, dest="checkpoint_interval", default=512, help="Number of images between checkpoints")
 
 args = parser.parse_args()
+args.dataset_input = os.path.join(os.getcwd(), args.dataset_input)
+args.dataset_real = os.path.join(os.getcwd(), args.dataset_real)
 
 def main():
     gan = load_model(args.model_name)
